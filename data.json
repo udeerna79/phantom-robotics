@@ -68,5 +68,10 @@
       "place": "wayaba university",
       "desc": "line following"
     }
-  ]
+  ],
+  "gallery": [],
+  "theme": {
+    "accent": "#ecebf0",
+    "accent2": "#ff7a5c"
+  }
 }
