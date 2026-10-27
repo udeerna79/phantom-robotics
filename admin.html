@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Phantom Admin</title>
+<style>
+:root{--bg:#f3f1fb;--card:#fff;--fg:#1a1533;--mute:#5d5780;--line:#cfc9ee;--vio:#6a4cf0;--ember:#e0482c}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#120e26;--card:#1b1538;--fg:#ece9fb;--mute:#a49fc9;--line:#2e2757;--vio:#9d85ff;--ember:#ff7a5c}}
+:root[data-theme="dark"]{--bg:#120e26;--card:#1b1538;--fg:#ece9fb;--mute:#a49fc9;--line:#2e2757;--vio:#9d85ff;--ember:#ff7a5c}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.5 system-ui,sans-serif;padding:24px 5vw 80px;max-width:900px;margin-inline:auto}
+h1{font-size:1.6rem;margin:0 0 4px}
+h2{font-size:1.2rem;margin:36px 0 10px}
+p.m{color:var(--mute);margin:0 0 16px}
+.box{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:12px}
+.row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-bottom:8px}
+input,textarea{width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--fg);font:inherit}
+label{font-size:.85rem;color:var(--mute);display:block;margin-bottom:2px}
+button{padding:10px 18px;border:0;border-radius:99px;background:var(--vio);color:#fff;font:600 .95rem system-ui;cursor:pointer}
+button.g{background:transparent;border:1px solid var(--line);color:var(--fg)}
+button.x{background:transparent;color:var(--ember);padding:4px 8px}
+.bar{position:fixed;left:0;right:0;bottom:0;padding:12px 5vw;background:var(--card);border-top:1px solid var(--line);display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+#st{color:var(--mute);flex:1}
+.hide{display:none}
+:focus-visible{outline:3px solid var(--vio);outline-offset:2px}
+</style>
+</head>
+<body>
+<h1>Phantom Robotics admin</h1>
+<p class="m">Edit your site here. Saving commits <code>data.json</code> to your GitHub repo and the site updates in about a minute.</p>
+
+<div class="box" id="conn">
+  <div class="row">
+    <div><label for="o">GitHub username</label><input id="o" autocomplete="off"></div>
+    <div><label for="r">Repository name</label><input id="r" autocomplete="off"></div>
+    <div><label for="b">Branch</label><input id="b" value="main"></div>
+  </div>
+  <label for="tk">Personal access token (fine-grained, Contents: read and write, this repo only)</label>
+  <input id="tk" type="password" autocomplete="off">
+  <p class="m" style="margin-top:10px">Stored only in this browser. Never share this token or commit it.</p>
+  <button id="load">Connect and load</button>
+</div>
+
+<div id="ed" class="hide"></div>
+
+<div class="bar hide" id="bar">
+  <span id="st"></span>
+  <button class="g" id="dl">Download JSON</button>
+  <button id="save">Save to GitHub</button>
+</div>
+
+<script>
+const $=s=>document.querySelector(s);
+let D=null,SHA=null;
+const LS={get:k=>{try{return localStorage.getItem(k)||''}catch(e){return ''}},set:(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}}};
+['o','r','b','tk'].forEach(i=>{const v=LS.get('ph_'+i);if(v)$('#'+i).value=v});
+const status=m=>$('#st').textContent=m;
+const api=()=>`https://api.github.com/repos/${$('#o').value.trim()}/${$('#r').value.trim()}/contents/data.json`;
+const hdr=()=>({Authorization:'Bearer '+$('#tk').value.trim(),Accept:'application/vnd.github+json'});
+const dec=b=>decodeURIComponent(escape(atob(b.replace(/\n/g,''))));
+const enc=s=>btoa(unescape(encodeURIComponent(s)));
+
+$('#load').onclick=async()=>{
+  ['o','r','b','tk'].forEach(i=>LS.set('ph_'+i,$('#'+i).value.trim()));
+  try{
+    const r=await fetch(api()+'?ref='+encodeURIComponent($('#b').value.trim()),{headers:hdr()});
+    if(!r.ok)throw new Error(r.status===404?'data.json or repo not found':r.status===401?'Token rejected':'GitHub error '+r.status);
+    const j=await r.json();SHA=j.sha;D=JSON.parse(dec(j.content));
+    $('#conn').classList.add('hide');$('#ed').classList.remove('hide');$('#bar').classList.remove('hide');
+    draw();status('Loaded.');
+  }catch(e){alert(e.message)}
+};
+
+$('#save').onclick=async()=>{
+  status('Saving…');
+  try{
+    const r=await fetch(api(),{method:'PUT',headers:hdr(),body:JSON.stringify({message:'Update site content via admin',content:enc(JSON.stringify(D,null,2)+'\n'),sha:SHA,branch:$('#b').value.trim()})});
+    if(!r.ok)throw new Error(r.status===409?'Changed elsewhere. Reload this page and try again.':'Save failed ('+r.status+')');
+    SHA=(await r.json()).content.sha;status('Saved. Site updates in about a minute.');
+  }catch(e){status(e.message)}
+};
+$('#dl').onclick=()=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(D,null,2)],{type:'application/json'}));a.download='data.json';a.click()};
+
+// field helper: input bound to obj[key]
+function inp(obj,key,label,type){
+  const w=document.createElement('div'),l=document.createElement('label'),i=document.createElement('input');
+  l.textContent=label;i.type=type||'text';i.value=obj[key]||'';i.oninput=()=>{obj[key]=i.value;status('Unsaved changes')};
+  w.append(l,i);return w;
+}
+function row(obj,fields){const r=document.createElement('div');r.className='row';fields.forEach(f=>r.append(inp(obj,f[0],f[1],f[2])));return r}
+function btn(txt,cls,fn){const b=document.createElement('button');b.textContent=txt;if(cls)b.className=cls;b.onclick=()=>{fn();draw()};return b}
+function list(title,arr,fields,blank,labelOf){
+  const s=document.createElement('section');s.innerHTML=`<h2>${title}</h2>`;
+  arr.forEach((it,n)=>{const b=document.createElement('div');b.className='box';b.append(row(it,fields),btn('Remove','x',()=>arr.splice(n,1)));s.append(b)});
+  s.append(btn('Add '+labelOf,'g',()=>arr.push({...blank})));return s;
+}
+function draw(){
+  const e=$('#ed');e.innerHTML='';
+  // contact
+  const c=document.createElement('section');c.innerHTML='<h2>Contact</h2>';
+  const cb=document.createElement('div');cb.className='box';
+  cb.append(row(D.contact,[['email','Contact email'],['formspree','Formspree URL (optional)']]));c.append(cb);e.append(c);
+  // teams
+  const t=document.createElement('section');t.innerHTML='<h2>Teams and members</h2>';
+  D.teams.forEach((tm,n)=>{
+    const b=document.createElement('div');b.className='box';
+    b.append(row(tm,[['name','Team name'],['desc','Description']]));
+    (tm.members=tm.members||[]).forEach((m,k)=>{const r=row(m,[['name','Member name'],['role','Role']]);r.append(btn('Remove member','x',()=>tm.members.splice(k,1)));b.append(r)});
+    b.append(btn('Add member','g',()=>tm.members.push({name:'',role:''})),' ',btn('Remove team','x',()=>D.teams.splice(n,1)));
+    t.append(b);
+  });
+  t.append(btn('Add team','g',()=>D.teams.push({name:'',desc:'',members:[]})));e.append(t);
+  e.append(list('Upcoming events',D.events,[['date','Date','date'],['title','Title'],['place','Place'],['desc','Description']],{date:'',title:'',place:'',desc:''},'event'));
+  e.append(list('Wins',D.wins,[['y','Year'],['t','Competition'],['r','Result (e.g. 1st place)'],['d','Description']],{y:'',t:'',r:'',d:''},'win'));
+}
+</script>
+</body>
+</html>

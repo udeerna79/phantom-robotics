@@ -1,0 +1,32 @@
+{
+  "contact": { "email": "phantomrobotics@example.com", "formspree": "" },
+  "wins": [
+    { "y": "2026", "t": "National Robotics Challenge", "r": "Champions", "d": "Replace with your real result." },
+    { "y": "2025", "t": "Inter-School Line Follower Race", "r": "2nd place", "d": "Replace with your real result." },
+    { "y": "2025", "t": "Sumo Bot Battle", "r": "1st place", "d": "Replace with your real result." }
+  ],
+  "teams": [
+    {
+      "name": "Sumo Push",
+      "desc": "Heavy, low and ruthless. Our sumo bots push opponents out of the ring.",
+      "members": [
+        { "name": "Member One", "role": "Team Leader" },
+        { "name": "Member Two", "role": "Mechanical Design" },
+        { "name": "Member Three", "role": "Programming" }
+      ]
+    },
+    {
+      "name": "Soccer Bot",
+      "desc": "Fast robots that chase the ball, dodge defenders and score.",
+      "members": [
+        { "name": "Member Four", "role": "Team Leader" },
+        { "name": "Member Five", "role": "Electronics" },
+        { "name": "Member Six", "role": "Programming" }
+      ]
+    }
+  ],
+  "events": [
+    { "date": "2026-12-05", "title": "Inter-School Robotics Contest", "place": "Colombo", "desc": "Replace with your real upcoming event." },
+    { "date": "2027-01-20", "title": "Club Open Day", "place": "School hall", "desc": "Replace with your real upcoming event." }
+  ]
+}

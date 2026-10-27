@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Phantom Robotics</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700&family=Instrument+Sans:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f3f1fb;--card:#fff;--fg:#1a1533;--mute:#5d5780;--line:#cfc9ee;--vio:#6a4cf0;--ember:#e0482c;
+ --disp:'Unbounded',system-ui,sans-serif;--body:'Instrument Sans',system-ui,sans-serif}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#120e26;--card:#1b1538;--fg:#ece9fb;--mute:#a49fc9;--line:#2e2757;--vio:#9d85ff;--ember:#ff7a5c}}
+:root[data-theme="dark"]{--bg:#120e26;--card:#1b1538;--fg:#ece9fb;--mute:#a49fc9;--line:#2e2757;--vio:#9d85ff;--ember:#ff7a5c}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--fg);font:17px/1.6 var(--body);padding-bottom:env(safe-area-inset-bottom,0px)}
+body.lock{overflow:hidden}
+:focus-visible{outline:3px solid var(--vio);outline-offset:3px}
+/* loader */
+#loader{position:fixed;inset:0;z-index:99;background:#0a0818;color:#ece9fb;display:flex;flex-direction:column;justify-content:flex-end;padding:0 6vw 8vh;transition:transform .9s cubic-bezier(.76,0,.24,1)}
+#loader.done{transform:translateY(-100%)}
+#pct{font:700 clamp(5rem,26vw,18rem)/.85 var(--disp);letter-spacing:-.06em;color:#9d85ff}
+#log{margin:18px 0 0;color:#b9b3dd;min-height:1.6em}
+#bar{height:3px;background:#2e2757;margin-top:18px}
+#bar i{display:block;height:100%;width:0;background:#ff7a5c}
+/* hero */
+.hero{position:relative;min-height:100svh;background:#0a0818;color:#ece9fb;overflow:hidden;display:flex;flex-direction:column;justify-content:flex-end;padding:0 6vw 9vh}
+#field{position:absolute;inset:0;width:100%;height:100%}
+.hero nav{position:absolute;top:max(22px,env(safe-area-inset-top,0px));left:6vw;right:6vw;display:flex;justify-content:space-between;align-items:center;font-weight:600;z-index:2}
+.hero nav a{text-decoration:none;margin-left:20px;opacity:.8}
+.hero nav a:hover{opacity:1}
+.hero h1{position:relative;z-index:1;margin:0;font:700 clamp(2.6rem,10.5vw,9rem)/.92 var(--disp);letter-spacing:-.04em;pointer-events:none}
+.hero h1 span{display:block;color:transparent;-webkit-text-stroke:2px #9d85ff}
+.hero p{position:relative;z-index:1;max-width:34ch;margin:28px 0 0;color:#b9b3dd;font-size:1.15rem}
+/* sections */
+.wrap{max-width:1040px;margin:0 auto;padding:12vh 6vw}
+h2{font:700 clamp(1.6rem,4vw,2.6rem)/1.1 var(--disp);letter-spacing:-.03em;margin:0 0 .6em}
+.lead{max-width:62ch;color:var(--mute);font-size:1.15rem}
+.stats{display:flex;gap:40px;flex-wrap:wrap;margin-top:36px}
+.stats b{display:block;font:700 2.4rem var(--disp);color:var(--vio)}
+.stats small{color:var(--mute)}
+.win{display:grid;grid-template-columns:7rem 1fr;gap:6vw;padding:30px 0;border-top:1px solid var(--line)}
+.win time{font:700 1.5rem var(--disp);color:var(--ember)}
+.win h3{margin:0 0 4px;font:500 1.2rem/1.3 var(--disp)}
+.win p{margin:0;color:var(--mute)}
+.badge{display:inline-block;margin-bottom:10px;padding:2px 12px;border:1px solid var(--ember);border-radius:99px;color:var(--ember);font-size:.85rem;font-weight:600}
+.team{margin-bottom:64px}
+.team h3{font:700 clamp(1.4rem,3.4vw,2.1rem) var(--disp);margin:0 0 6px}
+.team>p{color:var(--mute);margin:0 0 22px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:18px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:24px;transition:transform .25s,border-color .25s}
+.card:hover{transform:translateY(-6px);border-color:var(--vio)}
+.av{width:64px;height:64px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(135deg,var(--vio),var(--ember));color:#120e26;font:700 1.3rem var(--disp);margin-bottom:16px}
+.card b{display:block;font-size:1.1rem}
+.card span{color:var(--mute);font-size:.95rem}
+.ev{display:grid;grid-template-columns:5.5rem 1fr;gap:22px;align-items:center}
+.ev .d{text-align:center;border-right:1px solid var(--line);padding-right:18px}
+.ev .d b{display:block;font:700 2.2rem/1 var(--disp);color:var(--ember)}
+.ev h3{margin:0 0 2px;font:500 1.1rem var(--disp)}
+.ev p{margin:0;color:var(--mute)}
+.ev small{color:var(--vio);font-weight:600}
+form{display:grid;gap:14px;max-width:560px}
+input,textarea{width:100%;padding:14px 16px;border-radius:14px;border:1px solid var(--line);background:var(--card);color:var(--fg);font:inherit}
+textarea{min-height:130px;resize:vertical}
+.btn{padding:16px 36px;border:0;border-radius:99px;background:var(--vio);color:#120e26;font:600 1rem var(--body);cursor:pointer;justify-self:start;transition:transform .2s}
+.btn:hover{transform:scale(1.05)}
+#msg{margin:0;color:var(--mute)}
+footer{padding:32px 6vw;border-top:1px solid var(--line);color:var(--mute);font-size:.9rem;text-align:center}
+@media(max-width:600px){.win{grid-template-columns:1fr;gap:6px}}
+</style>
+</head>
+<body class="lock">
+<div id="loader" role="status" aria-label="Loading">
+  <div id="pct">0</div>
+  <p id="log">Booting Phantom systems…</p>
+  <div id="bar"><i></i></div>
+</div>
+
+<header class="hero">
+  <canvas id="field" aria-hidden="true"></canvas>
+  <nav><strong>Phantom Robotics</strong><div><a href="#teams">Teams</a><a href="#events">Events</a><a href="#wins">Wins</a><a href="#contact">Contact</a></div></nav>
+  <h1>Phantom<span>Robotics</span></h1>
+  <p>We build machines that work like they were never there. Move your cursor to scan.</p>
+</header>
+
+<main>
+<section class="wrap" id="about">
+  <h2>Built in the dark, proven on the arena</h2>
+  <p class="lead">Phantom Robotics is our school’s robotics club. We design, wire, code and break robots, then rebuild them better for the next competition.</p>
+  <div class="stats" id="stats"></div>
+</section>
+<section class="wrap" id="teams"><h2>Our teams</h2><div id="teamlist"></div></section>
+<section class="wrap" id="events"><h2>Upcoming events</h2><div class="grid" id="evlist"></div></section>
+<section class="wrap" id="wins"><h2>Our wins</h2><div id="winlist"></div></section>
+<section class="wrap" id="contact">
+  <h2>Contact us</h2>
+  <p class="lead">Want to join, sponsor us or just ask something? Send a message.</p>
+  <form id="cf">
+    <input name="name" placeholder="Your name" required autocomplete="name">
+    <input name="email" type="email" placeholder="Your email" required autocomplete="email">
+    <textarea name="message" placeholder="Your message" required></textarea>
+    <button class="btn" type="submit">Send message</button>
+    <p id="msg" role="status"></p>
+  </form>
+</section>
+</main>
+<footer>© 2026 Phantom Robotics</footer>
+
+<script>
+const $=s=>document.querySelector(s);
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const calm=matchMedia('(prefers-reduced-motion:reduce)').matches;
+let DATA=null;
+
+// ---- loader ----
+const lines=['Booting Phantom systems…','Calibrating sensors…','Charging motors…','Waking the robots…'];
+const loaded=fetch('data.json?'+Date.now()).then(r=>r.json()).then(d=>{DATA=d;render(d)}).catch(()=>{$('#teamlist').textContent='Could not load data.json. Host the site (GitHub Pages) or run a local server.'});
+const t0=performance.now(),DUR=calm?300:2000;
+(function tick(now){
+  const p=Math.min(1,(now-t0)/DUR);
+  $('#pct').textContent=Math.round(p*100);
+  $('#bar i').style.width=p*100+'%';
+  $('#log').textContent=lines[Math.min(3,Math.floor(p*4))];
+  if(p<1)requestAnimationFrame(tick);
+  else loaded.finally(()=>{$('#loader').classList.add('done');document.body.classList.remove('lock')});
+})(t0);
+
+// ---- render ----
+function render(d){
+  const wins=d.wins||[],teams=d.teams||[];
+  const today=new Date().toISOString().slice(0,10);
+  const evs=(d.events||[]).filter(e=>e.date>=today).sort((a,b)=>a.date<b.date?-1:1);
+  const ini=n=>String(n).trim().split(/\s+/).map(w=>w[0]).slice(0,2).join('').toUpperCase();
+  $('#stats').innerHTML=
+    `<div><b>${wins.length}</b><small>podium finishes</small></div>`+
+    `<div><b>${wins.filter(w=>/1st|champ/i.test(w.r)).length}</b><small>first places</small></div>`+
+    `<div><b>${teams.reduce((n,t)=>n+(t.members||[]).length,0)}</b><small>builders</small></div>`;
+  $('#teamlist').innerHTML=teams.map(t=>`<div class="team"><h3>${esc(t.name)}</h3><p>${esc(t.desc)}</p><div class="grid">`+
+    (t.members||[]).map(m=>`<div class="card"><div class="av">${esc(ini(m.name))}</div><b>${esc(m.name)}</b><span>${esc(m.role)}</span></div>`).join('')+`</div></div>`).join('');
+  $('#evlist').innerHTML=evs.length?evs.map(e=>{const dt=new Date(e.date+'T00:00');
+    return `<div class="card ev"><div class="d"><b>${dt.getDate()}</b>${dt.toLocaleString('en-GB',{month:'short'})}</div><div><h3>${esc(e.title)}</h3><small>${esc(e.place)}</small><p>${esc(e.desc)}</p></div></div>`}).join('')
+    :'<p class="lead">No events scheduled right now. Check back soon.</p>';
+  $('#winlist').innerHTML=wins.map(w=>`<article class="win"><time>${esc(w.y)}</time><div><span class="badge">${esc(w.r)}</span><h3>${esc(w.t)}</h3><p>${esc(w.d)}</p></div></article>`).join('');
+}
+
+// ---- contact ----
+$('#cf').addEventListener('submit',async e=>{
+  e.preventDefault();
+  const f=e.target,c=(DATA&&DATA.contact)||{},m=$('#msg');
+  const v=Object.fromEntries(new FormData(f));
+  if(c.formspree){
+    m.textContent='Sending…';
+    try{
+      const r=await fetch(c.formspree,{method:'POST',headers:{'Content-Type':'application/json',Accept:'application/json'},body:JSON.stringify(v)});
+      if(!r.ok)throw 0;
+      m.textContent='Message sent. We will reply soon.';f.reset();
+    }catch(x){m.textContent='Could not send. Please email '+(c.email||'us')+' directly.'}
+  }else{
+    location.href='mailto:'+encodeURIComponent(c.email||'')+'?subject='+encodeURIComponent('Message from '+v.name)+'&body='+encodeURIComponent(v.message+'\n\n'+v.name+' ('+v.email+')');
+    m.textContent='Opening your email app…';
+  }
+});
+
+// ---- scanner field ----
+const cv=$('#field'),cx=cv.getContext('2d');
+let W,H,pts=[],mx=0,my=0,auto=true,t=0;
+function init(){
+  const d=devicePixelRatio||1;W=cv.clientWidth;H=cv.clientHeight;cv.width=W*d;cv.height=H*d;cx.setTransform(d,0,0,d,0,0);
+  pts=[];const g=Math.max(26,Math.round(W/46));
+  for(let y=0;y<H+g;y+=g)for(let x=0;x<W+g;x+=g)pts.push([x,y]);
+}
+function draw(){
+  t+=.012;
+  if(auto){mx=W*(.5+.38*Math.sin(t*1.1));my=H*(.45+.3*Math.sin(t*1.7+1))}
+  cx.clearRect(0,0,W,H);
+  const R=Math.min(W,H)*.26;
+  for(const[x,y]of pts){
+    const wy=y+Math.sin(x*.012+t*2)*6,k=Math.max(0,1-Math.hypot(x-mx,wy-my)/R);
+    cx.fillStyle=k>0?`rgba(157,133,255,${.25+k*.75})`:'rgba(157,133,255,.16)';
+    cx.beginPath();cx.arc(x,wy,1.4+k*3.6,0,6.283);cx.fill();
+  }
+  cx.strokeStyle='rgba(255,122,92,.55)';cx.lineWidth=1.5;cx.beginPath();cx.arc(mx,my,R*.5+Math.sin(t*4)*4,0,6.283);cx.stroke();
+  if(!calm)requestAnimationFrame(draw);
+}
+addEventListener('pointermove',e=>{const r=cv.getBoundingClientRect();if(e.clientY<r.bottom){auto=false;mx=e.clientX-r.left;my=e.clientY-r.top}});
+addEventListener('resize',()=>{init();if(calm)draw()});
+init();draw();
+</script>
+</body>
+</html>
