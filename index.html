@@ -31,7 +31,7 @@ body.lock{overflow:hidden}
 .hero nav a{text-decoration:none;margin-left:20px;opacity:.8}
 .hero nav a:hover{opacity:1}
 .hero h1{position:relative;z-index:1;margin:0;font:700 clamp(2.6rem,10.5vw,9rem)/.92 var(--disp);letter-spacing:-.04em;pointer-events:none}
-.hero h1 span{display:block;color:transparent;-webkit-text-stroke:2px #9d85ff}
+.hero h1 span{display:block;color:transparent;-webkit-text-stroke:2px var(--hv,#9d85ff)}
 .hero p{position:relative;z-index:1;max-width:34ch;margin:28px 0 0;color:#b9b3dd;font-size:1.15rem}
 /* sections */
 .wrap{max-width:1040px;margin:0 auto;padding:12vh 6vw}
@@ -51,7 +51,7 @@ h2{font:700 clamp(1.6rem,4vw,2.6rem)/1.1 var(--disp);letter-spacing:-.03em;margi
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:18px}
 .card{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:24px;transition:transform .25s,border-color .25s}
 .card:hover{transform:translateY(-6px);border-color:var(--vio)}
-.av{width:64px;height:64px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(135deg,var(--vio),var(--ember));color:#120e26;font:700 1.3rem var(--disp);margin-bottom:16px}
+.av{width:64px;height:64px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(135deg,var(--vio),var(--ember));color:#120e26;font:700 1.3rem var(--disp);margin-bottom:16px;overflow:hidden}.av img{width:100%;height:100%;object-fit:cover}
 .card b{display:block;font-size:1.1rem}
 .card span{color:var(--mute);font-size:.95rem}
 .ev{display:grid;grid-template-columns:5.5rem 1fr;gap:22px;align-items:center}
@@ -60,6 +60,7 @@ h2{font:700 clamp(1.6rem,4vw,2.6rem)/1.1 var(--disp);letter-spacing:-.03em;margi
 .ev h3{margin:0 0 2px;font:500 1.1rem var(--disp)}
 .ev p{margin:0;color:var(--mute)}
 .ev small{color:var(--vio);font-weight:600}
+.gal{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px}.gal figure{margin:0;border-radius:18px;overflow:hidden;background:var(--card);border:1px solid var(--line)}.gal img{display:block;width:100%;aspect-ratio:4/3;object-fit:cover}.gal figcaption{padding:10px 14px;color:var(--mute);font-size:.95rem}
 form{display:grid;gap:14px;max-width:560px}
 input,textarea{width:100%;padding:14px 16px;border-radius:14px;border:1px solid var(--line);background:var(--card);color:var(--fg);font:inherit}
 textarea{min-height:130px;resize:vertical}
@@ -79,7 +80,7 @@ footer{padding:32px 6vw;border-top:1px solid var(--line);color:var(--mute);font-
 
 <header class="hero">
   <canvas id="field" aria-hidden="true"></canvas>
-  <nav><strong>Phantom Robotics</strong><div><a href="#teams">Teams</a><a href="#events">Events</a><a href="#wins">Wins</a><a href="#contact">Contact</a></div></nav>
+  <nav><strong>Phantom Robotics</strong><div><a href="#teams">Teams</a><a href="#events">Events</a><a href="#wins">Wins</a><a href="#gallery">Gallery</a><a href="#contact">Contact</a></div></nav>
   <h1>Phantom<span>Robotics</span></h1>
   <p>We build machines that work like they were never there. Move your cursor to scan.</p>
 </header>
@@ -93,6 +94,7 @@ footer{padding:32px 6vw;border-top:1px solid var(--line);color:var(--mute);font-
 <section class="wrap" id="teams"><h2>Our teams</h2><div id="teamlist"></div></section>
 <section class="wrap" id="events"><h2>Upcoming events</h2><div class="grid" id="evlist"></div></section>
 <section class="wrap" id="wins"><h2>Our wins</h2><div id="winlist"></div></section>
+<section class="wrap" id="gallery" hidden><h2>Gallery</h2><div class="gal" id="gal"></div></section>
 <section class="wrap" id="contact">
   <h2>Contact us</h2>
   <p class="lead">Want to join, sponsor us or just ask something? Send a message.</p>
@@ -127,7 +129,13 @@ const t0=performance.now(),DUR=calm?300:2000;
 })(t0);
 
 // ---- render ----
+function applyTheme(t){if(!t)return;const s=document.documentElement.style,h=x=>/^#[0-9a-f]{6}$/i.test(x||''),rgb=x=>[1,3,5].map(i=>parseInt(x.substr(i,2),16)).join(',');
+  if(h(t.accent)){s.setProperty('--vio',t.accent);s.setProperty('--hv',t.accent);RGB=rgb(t.accent)}
+  if(h(t.accent2)){s.setProperty('--ember',t.accent2);RGB2=rgb(t.accent2)}}
 function render(d){
+  applyTheme(d.theme);
+  const gl=d.gallery||[];$('#gallery').hidden=!gl.length;
+  $('#gal').innerHTML=gl.map(p=>`<figure><img src="${esc(p.src)}" alt="${esc(p.caption)}" loading="lazy"><figcaption>${esc(p.caption)}</figcaption></figure>`).join('');
   const wins=d.wins||[],teams=d.teams||[];
   const today=new Date().toISOString().slice(0,10);
   const evs=(d.events||[]).filter(e=>e.date>=today).sort((a,b)=>a.date<b.date?-1:1);
@@ -137,7 +145,7 @@ function render(d){
     `<div><b>${wins.filter(w=>/1st|champ/i.test(w.r)).length}</b><small>first places</small></div>`+
     `<div><b>${teams.reduce((n,t)=>n+(t.members||[]).length,0)}</b><small>builders</small></div>`;
   $('#teamlist').innerHTML=teams.map(t=>`<div class="team"><h3>${esc(t.name)}</h3><p>${esc(t.desc)}</p><div class="grid">`+
-    (t.members||[]).map(m=>`<div class="card"><div class="av">${esc(ini(m.name))}</div><b>${esc(m.name)}</b><span>${esc(m.role)}</span></div>`).join('')+`</div></div>`).join('');
+    (t.members||[]).map(m=>`<div class="card"><div class="av">${m.photo?`<img src="${esc(m.photo)}" alt="${esc(m.name)}" loading="lazy">`:esc(ini(m.name))}</div><b>${esc(m.name)}</b><span>${esc(m.role)}</span></div>`).join('')+`</div></div>`).join('');
   $('#evlist').innerHTML=evs.length?evs.map(e=>{const dt=new Date(e.date+'T00:00');
     return `<div class="card ev"><div class="d"><b>${dt.getDate()}</b>${dt.toLocaleString('en-GB',{month:'short'})}</div><div><h3>${esc(e.title)}</h3><small>${esc(e.place)}</small><p>${esc(e.desc)}</p></div></div>`}).join('')
     :'<p class="lead">No events scheduled right now. Check back soon.</p>';
@@ -164,7 +172,7 @@ $('#cf').addEventListener('submit',async e=>{
 
 // ---- scanner field ----
 const cv=$('#field'),cx=cv.getContext('2d');
-let W,H,pts=[],mx=0,my=0,auto=true,t=0;
+let W,H,pts=[],mx=0,my=0,auto=true,t=0,RGB='157,133,255',RGB2='255,122,92';
 function init(){
   const d=devicePixelRatio||1;W=cv.clientWidth;H=cv.clientHeight;cv.width=W*d;cv.height=H*d;cx.setTransform(d,0,0,d,0,0);
   pts=[];const g=Math.max(26,Math.round(W/46));
@@ -177,10 +185,10 @@ function draw(){
   const R=Math.min(W,H)*.26;
   for(const[x,y]of pts){
     const wy=y+Math.sin(x*.012+t*2)*6,k=Math.max(0,1-Math.hypot(x-mx,wy-my)/R);
-    cx.fillStyle=k>0?`rgba(157,133,255,${.25+k*.75})`:'rgba(157,133,255,.16)';
+    cx.fillStyle=k>0?`rgba(${RGB},${.25+k*.75})`:`rgba(${RGB},.16)`;
     cx.beginPath();cx.arc(x,wy,1.4+k*3.6,0,6.283);cx.fill();
   }
-  cx.strokeStyle='rgba(255,122,92,.55)';cx.lineWidth=1.5;cx.beginPath();cx.arc(mx,my,R*.5+Math.sin(t*4)*4,0,6.283);cx.stroke();
+  cx.strokeStyle=`rgba(${RGB2},.55)`;cx.lineWidth=1.5;cx.beginPath();cx.arc(mx,my,R*.5+Math.sin(t*4)*4,0,6.283);cx.stroke();
   if(!calm)requestAnimationFrame(draw);
 }
 addEventListener('pointermove',e=>{const r=cv.getBoundingClientRect();if(e.clientY<r.bottom){auto=false;mx=e.clientX-r.left;my=e.clientY-r.top}});

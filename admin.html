@@ -25,6 +25,7 @@ button.x{background:transparent;color:var(--ember);padding:4px 8px}
 #st{color:var(--mute);flex:1}
 .hide{display:none}
 :focus-visible{outline:3px solid var(--vio);outline-offset:2px}
+input[type=color]{height:44px;padding:4px}
 </style>
 </head>
 <body>
@@ -89,7 +90,20 @@ function inp(obj,key,label,type){
   l.textContent=label;i.type=type||'text';i.value=obj[key]||'';i.oninput=()=>{obj[key]=i.value;status('Unsaved changes')};
   w.append(l,i);return w;
 }
-function row(obj,fields){const r=document.createElement('div');r.className='row';fields.forEach(f=>r.append(inp(obj,f[0],f[1],f[2])));return r}
+function row(obj,fields){const r=document.createElement('div');r.className='row';fields.forEach(f=>r.append(f[2]==='photo'?photo(obj,f[0],f[1]):inp(obj,f[0],f[1],f[2])));return r}
+function shrink(file){return new Promise((ok,no)=>{const im=new Image();im.onload=()=>{const s=Math.min(1,1200/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=im.width*s;c.height=im.height*s;c.getContext('2d').drawImage(im,0,0,c.width,c.height);ok(c.toDataURL('image/jpeg',.82).split(',')[1])};im.onerror=()=>no(new Error('Could not read image'));im.src=URL.createObjectURL(file)})}
+function photo(obj,key,label){
+  const w=inp(obj,key,label+' (upload or path)'),f=document.createElement('input');
+  f.type='file';f.accept='image/*';f.style.marginTop='6px';
+  f.onchange=async()=>{const file=f.files[0];if(!file)return;status('Uploading photo…');
+    try{
+      const b=await shrink(file),name='images/'+Date.now()+'.jpg';
+      const r=await fetch(`https://api.github.com/repos/${$('#o').value.trim()}/${$('#r').value.trim()}/contents/${name}`,{method:'PUT',headers:hdr(),body:JSON.stringify({message:'Add photo',content:b,branch:$('#b').value.trim()})});
+      if(!r.ok)throw new Error('Upload failed ('+r.status+')');
+      obj[key]=name;status('Photo uploaded. Press Save to GitHub to publish.');draw();
+    }catch(e){status(e.message)}};
+  w.append(f);return w;
+}
 function btn(txt,cls,fn){const b=document.createElement('button');b.textContent=txt;if(cls)b.className=cls;b.onclick=()=>{fn();draw()};return b}
 function list(title,arr,fields,blank,labelOf){
   const s=document.createElement('section');s.innerHTML=`<h2>${title}</h2>`;
@@ -97,22 +111,25 @@ function list(title,arr,fields,blank,labelOf){
   s.append(btn('Add '+labelOf,'g',()=>arr.push({...blank})));return s;
 }
 function draw(){
-  const e=$('#ed');e.innerHTML='';
+  const e=$('#ed');e.innerHTML='';D.gallery=D.gallery||[];D.theme=D.theme||{accent:'#9d85ff',accent2:'#ff7a5c'};
   // contact
   const c=document.createElement('section');c.innerHTML='<h2>Contact</h2>';
   const cb=document.createElement('div');cb.className='box';
   cb.append(row(D.contact,[['email','Contact email'],['formspree','Formspree URL (optional)']]));c.append(cb);e.append(c);
+  const th=document.createElement('section');th.innerHTML='<h2>Colours</h2>';
+  const tb=document.createElement('div');tb.className='box';tb.append(row(D.theme,[['accent','Main colour','color'],['accent2','Second colour','color']]));th.append(tb);e.append(th);
   // teams
   const t=document.createElement('section');t.innerHTML='<h2>Teams and members</h2>';
   D.teams.forEach((tm,n)=>{
     const b=document.createElement('div');b.className='box';
     b.append(row(tm,[['name','Team name'],['desc','Description']]));
-    (tm.members=tm.members||[]).forEach((m,k)=>{const r=row(m,[['name','Member name'],['role','Role']]);r.append(btn('Remove member','x',()=>tm.members.splice(k,1)));b.append(r)});
+    (tm.members=tm.members||[]).forEach((m,k)=>{const r=row(m,[['name','Member name'],['role','Role'],['photo','Photo','photo']]);r.append(btn('Remove member','x',()=>tm.members.splice(k,1)));b.append(r)});
     b.append(btn('Add member','g',()=>tm.members.push({name:'',role:''})),' ',btn('Remove team','x',()=>D.teams.splice(n,1)));
     t.append(b);
   });
   t.append(btn('Add team','g',()=>D.teams.push({name:'',desc:'',members:[]})));e.append(t);
   e.append(list('Upcoming events',D.events,[['date','Date','date'],['title','Title'],['place','Place'],['desc','Description']],{date:'',title:'',place:'',desc:''},'event'));
+  e.append(list('Gallery',D.gallery,[['src','Photo','photo'],['caption','Caption']],{src:'',caption:''},'photo'));
   e.append(list('Wins',D.wins,[['y','Year'],['t','Competition'],['r','Result (e.g. 1st place)'],['d','Description']],{y:'',t:'',r:'',d:''},'win'));
 }
 </script>
